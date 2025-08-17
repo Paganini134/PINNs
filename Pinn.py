@@ -7,7 +7,7 @@ import pandas as pd
 import os
 from datetime import datetime
 import time
-
+import pdb
 class PCMSimulation:
     def __init__(self, length=0.1, n_nodes=101, T_solidus=4.0, T_liquidus=5.0,
                  T_initial=2.0, rho=1000, cp_solid=2000, cp_liquid=2500,
@@ -190,7 +190,7 @@ class PCMSimulation:
                 save_counter += 1
 
                 # Stop if 90% melted
-                if avg_melt_fraction >= 0.9:
+                if avg_melt_fraction >= 0.9: #
                     print(f"Simulation completed: 90% melt fraction reached at t={self.time:.1f}s")
                     break
 
@@ -238,7 +238,7 @@ class PCMSimulation:
         plt.show()
 
 
-def generate_training_data(boundary_temperatures, output_dir='pcm_training_data'):
+def generate_training_data(boundary_temperatures,save_interval_1, output_dir='pcm_training_data'):
     """Generate training data for PINN"""
 
     # Create output directory
@@ -259,9 +259,14 @@ def generate_training_data(boundary_temperatures, output_dir='pcm_training_data'
         # Run simulation
         time_array, melt_fraction_array = sim.solve_heat_equation(
             T_boundary=T_boundary,
-            max_time=1000000,
-            save_interval=4.0
+            max_time=1000000, 
+            save_interval=save_interval_1
         )
+
+
+        melt_fraction_array = [round(i, 3) for i in melt_fraction_array]
+        time_array = [round(i, 1) for i in time_array]
+
         print(f"Simulation completed in {time.time() - a:.2f} seconds")
 
         # Store data for this boundary condition
@@ -277,6 +282,11 @@ def generate_training_data(boundary_temperatures, output_dir='pcm_training_data'
 
         # Plot results
         sim.plot_results(T_boundary)
+        # add a zero in the start of the time array and the melt fraction array
+        melt_fraction_array = np.insert(melt_fraction_array, 0, 0)
+        time_array = np.insert(time_array, 0, 0)
+
+
 
         # Save individual dataset
         df_individual = pd.DataFrame({
@@ -284,11 +294,14 @@ def generate_training_data(boundary_temperatures, output_dir='pcm_training_data'
             'melt_fraction': melt_fraction_array,
             'boundary_temperature': T_boundary
         })
-        df_individual.to_csv(f'{output_dir}/data_T{T_boundary}_4.csv', index=False)
+        save_dir = "./datasplits/pcm_training_data"
+        os.makedirs(save_dir, exist_ok=True)  # creates the folder if it doesn't exist
+        
+        df_individual.to_csv(f'./datasplits/{output_dir}/data_T{T_boundary}_{save_interval_1}.csv', index=False)
 
     # Save combined dataset
     df_combined = pd.DataFrame(all_data)
-    df_combined.to_csv(f'{output_dir}/combined_training_data_4.csv', index=False)
+    df_combined.to_csv(f'./datasplits/{output_dir}/combined_training_data_{save_interval_1}.csv', index=False)
 
     print(f"\nTraining data generated successfully!")
     print(f"Total data points: {len(all_data)}")
@@ -300,10 +313,12 @@ def generate_training_data(boundary_temperatures, output_dir='pcm_training_data'
 # Example usage
 if __name__ == "__main__":
     # Define boundary temperatures for training
-    boundary_temperatures = [20, 25, 30, 32, 35, 40, 45, 50]
-
+    boundary_temperatures = [20,22, 25,27, 30, 32, 35,37, 40,42, 45,47, 50]
+    
+    print("Specify save interval for Dataset")
+    save_interval_1 = 4.0
     # Generate training data
-    training_data = generate_training_data(boundary_temperatures)
+    training_data = generate_training_data(boundary_temperatures, save_interval_1=save_interval_1)
 
     # Display summary statistics
     print("\n=== Training Data Summary ===")
@@ -317,506 +332,3 @@ if __name__ == "__main__":
     print(training_data.head(10))
 
     
-
-# def custom_split(X_norm, y_norm, validation_split, random_state=42):
-#     '''
-#     Wow a docstring
-#     '''
-
-#     print(X_norm.shape)
-#     a,b,c,d=0,0,0,0
-#     print(X_norm[0])
-
-    
-    
-#     return a,b,c,d
-    
-    
-    
-# from tqdm import trange, tqdm
-
-# import numpy as np
-# import pandas as pd
-# import tensorflow as tf
-# from tensorflow import keras
-# from keras import layers
-# import matplotlib.pyplot as plt
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.model_selection import train_test_split
-# import os
-# import time # Import time for progress indicator
-# import pdb
-
-# class PCM_PINN:
-#     def __init__(self, hidden_layers=[32, 32], activation='tanh', # Reduced hidden layers
-#                  learning_rate=0.001, T_solidus=4.0, T_liquidus=5.0):
-#         """
-#         Physics-Informed Neural Network for Phase Change Material
-
-#         Parameters:
-#         - hidden_layers: List of hidden layer sizes
-#         - activation: Activation function
-#         - learning_rate: Learning rate for optimizer
-#         - T_solidus: Solidus temperature
-#         - T_liquidus: Liquidus temperature
-#         """
-#         self.hidden_layers = hidden_layers
-#         self.activation = activation
-#         self.learning_rate = learning_rate
-#         self.T_solidus = T_solidus
-#         self.T_liquidus = T_liquidus
-
-#         # Scalers for normalization
-        
-#         # self.scaler_input = StandardScaler()
-#         # self.scaler_output = StandardScaler()
-
-#         # Build neural network
-#         self.build_network()
-
-#         # Physics parameters (will be set during training)
-#         self.alpha = None  # Thermal diffusivity
-#         self.L_fusion = None # Latent heat
-        
-
-
-#     def build_network(self):
-#         """Build the neural network architecture"""
-#         # Input: [boundary_temperature, time]
-#         inputs = keras.Input(shape=(2,), name='input')
-
-#         # Hidden layers
-#         x = inputs
-#         for i, units in enumerate(self.hidden_layers):
-#             x = layers.Dense(units, activation='tanh',
-#                            name=f'hidden_{i+1}')(x)
-
-#         # Output: melt_fraction
-#         outputs = layers.Dense(1, activation='sigmoid', name='melt_fraction')(x)
-
-#         # Create model
-#         self.model = keras.Model(inputs=inputs, outputs=outputs, name='PCM_PINN')
-
-#         # Compile model
-#         self.model.compile(
-#             optimizer=keras.optimizers.Adam(learning_rate=self.learning_rate),
-#             loss='mse',
-#             metrics=['mae']
-#         )
-
-#         print("Neural Network Architecture:")
-#         self.model.summary()
-
-#     def physics_loss(self, y_true, y_pred, inputs):
-#         """
-#         Calculate physics-informed loss based on heat equation
-#         This is a simplified physics loss - in practice, you might want to include
-#         more complex physics constraints
-#         """
-#         # Extract inputs
-#         T_boundary = inputs[:, 0:1]
-#         time = inputs[:, 1:2]
-
-#         # Ensure inputs are float32 Tensors
-#         T_boundary = tf.cast(T_boundary, tf.float32)
-#         time = tf.cast(time, tf.float32)
-#         inputs = tf.cast(inputs, tf.float32)
-
-
-#         # Physics constraint: melt fraction should increase with temperature and time
-#         # This is a simplified constraint - more complex physics can be added
-
-#         # Temporal gradient (dmelt_fraction/dt should be >= 0)
-#         with tf.GradientTape() as tape:
-#             tape.watch(time)
-#             # Ensure the model receives the inputs as a tensor for gradient calculation
-#             melt_pred = self.model(inputs)
-
-#         dmelt_dt = tape.gradient(melt_pred, time)
-
-#         # Handle potential None gradient
-#         if dmelt_dt is None:
-#              physics_loss = tf.constant(0.0) # or a small penalty
-#         else:
-#             # Physics loss: penalize negative time derivatives
-#             physics_loss = tf.reduce_mean(tf.square(tf.minimum(dmelt_dt, 0.0)))
-
-
-#         return physics_loss
-
-#     def custom_loss(self, y_true, y_pred, inputs, physics_weight=0.1):
-#         """Combined data + physics loss"""
-#         # Data loss
-#         data_loss = tf.reduce_mean(tf.square(y_true - y_pred))
-
-#         # Physics loss
-#         phys_loss = self.physics_loss(y_true, y_pred, inputs)
-
-#         # Combined loss
-#         total_loss = data_loss + physics_weight * phys_loss
-
-#         return total_loss
-
-#     def prepare_data(self, data_path):
-#         """Prepare training data from CSV file"""
-#         print("Preparing data...") # Marker
-#         # Load data
-#         if isinstance(data_path, str):
-#             df = pd.read_csv(data_path)
-#         else:
-#             df = data_path  # Assume it's already a DataFrame
-        
-
-#         print("Data")
-#         print(len(df))
-#         print(df.info())
-#         # Prepare features and targets
-#         X = df[['boundary_temperature', 'time']].values
-#         y = df[['melt_fraction']].values
-
-#         # # Normalize inputs and outputs
-#         # print("I need the distribution of the data")
-#         # print(type(X))
-#         # df[df['boundary_temperature']==20]
-#         # print('Value count')
-#         # print(df['boundary_temperature'].value_counts())
-#         # print("Histogram")
-#         # df['boundary_temperature'].hist(bins=20)
-#         # plt.xlabel('Boundary Temperature')
-#         # plt.ylabel('Count')
-#         # plt.title('Distribution of Boundary Temperature')
-#         # plt.savefig("image.png")
-#         # print("For the `mf")
-#         # print(df['melt_fraction'].value_counts())
-
-#         from sklearn.model_selection import GroupShuffleSplit
-
-#         split = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-#         train_idx, test_idx = next(split.split(X, y, groups=df['boundary_temperature']))
-
-#         # always 
-#         X_train, X_val = X[train_idx], X[test_idx]
-#         y_train, y_val = y[train_idx], y[test_idx]
-#         print(len(X), len(y), len(df['boundary_temperature']))
-#         mask = (df['boundary_temperature'] == 20).values
-#         mask_45 = (df['boundary_temperature'] == 40).values
-#         X_20 = X[mask]
-#         X_45 = X[mask_45]
-#         pdb.set_trace() 
-
-
-#         # X_normalized = self.scaler_input.fit_transform(X)
-#         # y_normalized = self.scaler_output.fit_transform(y)
-#         print("Data preparation complete.") # Marker
-#         return X_train, X_val, y_train, y_val
-
-
-
-#     def train(self, data_path, epochs=1000, batch_size=32, validation_split=0.2,
-#               physics_weight=0.1, verbose=1):
-#         """Train the PINN model"""
-#         print("Starting model training...") # Marker
-#         print()
-#         print("Make sure that the data is well distributed ")
-#         X_train, X_val, y_train, y_val = self.prepare_data(data_path)
-#         print("How does the data look now")
-#         # Split data
-#         print("Splitting data...") # Marker
-#         # defining a custom split
-
-#         # X_train, X_val, y_train, y_val = custom_split(X_norm, y_norm,validation_split,42)
-   
-
-#         print(f"Training data shape: {X_train.shape}")
-#         print(f"Validation data shape: {X_val.shape}")
-
-#         # Custom training loop for physics-informed loss
-#         optimizer = keras.optimizers.Adam(learning_rate=self.learning_rate)
-
-#         # Training history
-#         train_losses = []
-#         val_losses = []
-
-#         print("Entering training loop...") # Marker
-#         start_time = time.time() # For progress indicator
-#         epochs =500
-#         for epoch in trange(epochs):
-#             print(f"--- Epoch {epoch+1}/{epochs} ---") # Epoch marker
-#             epoch_loss = 0
-#             n_batches = 0
-
-#             # Batch training
-#             for i in trange(0, len(X_train), batch_size):
-#                 batch_X = X_train[i:i+batch_size]
-#                 batch_y = y_train[i:i+batch_size]
-
-#                 # print(f"  Processing batch {i//batch_size + 1}/{(len(X_train) + batch_size - 1) // batch_size}...") # Batch marker
-#                 # print("    Calculating gradients...") # Gradient marker
-#                 with tf.GradientTape() as tape:
-#                     predictions = self.model(batch_X, training=True)
-#                     loss = self.custom_loss(batch_y, predictions, batch_X, physics_weight)
-
-#                 gradients = tape.gradient(loss, self.model.trainable_variables)
-#                 # print("    Applying gradients...") # Apply gradients marker
-#                 optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
-#                 # print("    Gradients applied.") # Gradients applied marker
-
-#                 epoch_loss += loss.numpy()
-#                 n_batches += 1
-#                 # print(f"    Batch {i//batch_size + 1} processed. Current epoch loss: {epoch_loss:.6f}") # Batch processed marker
-
-
-#             # Validation loss
-#             print("  Calculating validation loss...") # Validation marker
-#             val_pred = self.model(X_val, training=False)
-#             val_loss = tf.reduce_mean(tf.square(y_val - val_pred)).numpy()
-#             print(f"  Validation loss: {val_loss:.6f}") # Validation loss marker
-
-#             train_losses.append(epoch_loss / n_batches)
-#             val_losses.append(val_loss)
-
-#             # Print progress
-#             if verbose and (epoch + 1) % 10 == 0: # Print more frequently for debugging
-#                 elapsed_time = time.time() - start_time
-#                 epochs_per_sec = (epoch + 1) / elapsed_time if elapsed_time > 0 else 0
-#                 print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_losses[-1]:.6f}, "
-#                       f"Val Loss: {val_losses[-1]:.6f} ({epochs_per_sec:.2f} epochs/sec)") # Progress indicator
-
-#         print("Exiting training loop.") # Marker
-#         # Store training history
-#         self.history = {
-#             'train_loss': train_losses,
-#             'val_loss': val_losses
-#         }
-
-#         print("Training completed!") # Marker
-#         return self.history
-
-
-
-
-
-
-
-#     def predict(self, boundary_temperature, time_array):
-#         """
-#         Predict melt fraction for given boundary temperature and time array
-
-#         Parameters:
-#         - boundary_temperature: Boundary temperature (°C)
-#         - time_array: Array of time points (s)
-
-#         Returns:
-#         - melt_fraction_array: Predicted melt fractions
-#         """
-#         # Prepare input
-#         T_boundary_array = np.full_like(time_array, boundary_temperature)
-#         X_input = np.column_stack([T_boundary_array, time_array])
-
-#         # Normalize input
-#         X_normalized = self.scaler_input.transform(X_input)
-
-#         # Predict
-#         y_pred_normalized = self.model.predict(tf.cast(X_normalized, tf.float32), verbose=0)
-
-#         # Denormalize output
-#         y_pred = self.scaler_output.inverse_transform(y_pred_normalized)
-
-#         return y_pred.flatten()
-    
-    
-
-#     def plot_training_history(self):
-#         """Plot training history"""
-#         print("Plotting training history...") # Marker
-#         plt.figure(figsize=(10, 6))
-
-#         plt.subplot(1, 2, 1)
-#         plt.plot(self.history['train_loss'], label='Training Loss')
-#         plt.plot(self.history['val_loss'], label='Validation Loss')
-#         plt.xlabel('Epoch')
-#         plt.ylabel('Loss')
-#         plt.title('Training History')
-#         plt.legend()
-#         plt.grid(True, alpha=0.3)
-
-#         plt.subplot(1, 2, 2)
-#         plt.semilogy(self.history['train_loss'], label='Training Loss')
-#         plt.semilogy(self.history['val_loss'], label='Validation Loss')
-#         plt.xlabel('Epoch')
-#         plt.ylabel('Loss (log scale)')
-#         plt.title('Training History (Log Scale)')
-#         plt.legend()
-#         plt.grid(True, alpha=0.3)
-
-#         plt.tight_layout()
-#         plt.savefig('pinn_training_history.png', dpi=300, bbox_inches='tight')
-#         plt.show()
-#         print("Training history plot complete.") # Marker
-
-
-#     def evaluate_model(self, test_data_path=None, test_temperatures=[22, 28, 33, 38]):
-#         """Evaluate model performance"""
-#         print("Evaluating model...") # Marker
-#         # If test data provided, evaluate on it
-#         if test_data_path:
-#             X_test, y_test, _, _ = self.prepare_data(test_data_path)
-#             test_pred = self.model.predict(tf.cast(X_test, tf.float32), verbose=0)
-#             test_loss = tf.reduce_mean(tf.square(y_test - test_pred)).numpy()
-#             print(f"Test Loss: {test_loss:.6f}")
-
-#         # Generate predictions for different temperatures
-#         plt.figure(figsize=(15, 10))
-
-#         for i, T_boundary in enumerate(test_temperatures):
-#             plt.subplot(2, 2, i+1)
-
-#             # Generate time array
-#             time_array = np.linspace(0, 1000, 200)
-
-#             # Predict melt fraction
-#             melt_pred = self.predict(T_boundary, time_array)
-
-#             # Plot
-#             plt.plot(time_array, melt_pred, 'b-', linewidth=2,
-#                     label=f'PINN Prediction (T={T_boundary}°C)')
-
-#             plt.xlabel('Time (s)')
-#             plt.ylabel('Melt Fraction')
-#             plt.title(f'Boundary Temperature = {T_boundary}°C')
-#             plt.grid(True, alpha=0.3)
-#             plt.legend()
-#             plt.ylim(0, 1)
-
-#         plt.tight_layout()
-#         plt.savefig('pinn_predictions.png', dpi=300, bbox_inches='tight')
-#         plt.show()
-#         print("Model evaluation complete.") # Marker
-
-#     def save_model(self, filepath):
-#         """Save the trained model"""
-#         print(f"Saving model to {filepath}...") # Marker
-#         self.model.save(filepath)
-
-#         # Save scalers
-#         import joblib
-#         joblib.dump(self.scaler_input, filepath + '_scaler_input.pkl')
-#         joblib.dump(self.scaler_output, filepath + '_scaler_output.pkl')
-
-#         print(f"Model saved to {filepath}") # Marker
-
-#     def load_model(self, filepath):
-#         """Load a trained model"""
-#         print(f"Loading model from {filepath}...") # Marker
-#         self.model.load_model(filepath)
-
-#         # Load scalers
-#         import joblib
-#         self.scaler_input = joblib.load(filepath + '_scaler_input.pkl')
-#         self.scaler_output = joblib.load(filepath + '_scaler_output.pkl')
-
-#         print(f"Model loaded from {filepath}") # Marker
-
-
-
-# def train_pinn_model(data_path='pcm_training_data/combined_training_data.csv'):
-#     """Main function to train PINN model"""
-#     print("=== Training PINN Model for Phase Change Material ===\n")
-
-#     # Initialize PINN
-#     pinn = PCM_PINN(
-#         hidden_layers=[64, 64, 64], # Simplified hidden layers
-#         activation='tanh',
-#         learning_rate=0.001,
-#         T_solidus=4.0,
-#         T_liquidus=5.0
-#     )
-
-#     # print("Model characteristics")
-#     # print(pinn.model.summary())
-
-
-#     # Train model
-#     history = pinn.train(
-#         data_path=data_path,
-#         epochs=10, # Reduced epochs for quicker training
-#         batch_size=32,
-#         validation_split=0.2,
-#         physics_weight=0.1,
-#         verbose=1
-#     )
-
-#     # Plot training history
-#     pinn.plot_training_history()
-
-#     # Evaluate model
-#     pinn.evaluate_model(test_temperatures=[22, 28, 33, 38, 42])
-
-#     # Save model
-#     pinn.save_model('trained_pcm_pinn_model_simple') # Changed filename to indicate simplicity
-
-#     return pinn
-
-
-# # Example usage and comparison
-# def compare_fem_and_pinn():
-#     """Compare FEM simulation with PINN predictions"""
-#     print("Starting FEM and PINN comparison...") # Marker
-#     # Load training data to get a trained PINN (assuming it exists)
-#     try:
-#         pinn = PCM_PINN()
-#         pinn.load_model('trained_pcm_pinn_model_simple') # Load simplified model
-
-#         # Test temperatures
-#         test_temperatures = [25, 35, 45]
-
-#         plt.figure(figsize=(15, 5))
-
-#         for i, T_boundary in enumerate(test_temperatures):
-#             plt.subplot(1, 3, i+1)
-
-#             # FEM simulation
-#             from pcm_fem_simulation import PCMSimulation
-#             sim = PCMSimulation()
-#             print(f"Running FEM simulation for T_boundary = {T_boundary}°C...") # Marker
-#             time_fem, melt_fem = sim.solve_heat_equation(T_boundary, max_time=1000)
-#             print(f"FEM simulation for T_boundary = {T_boundary}°C complete.") # Marker
-
-#             # PINN prediction
-#             time_pinn = np.linspace(0, 1000, 200)
-#             print(f"Running PINN prediction for T_boundary = {T_boundary}°C...") # Marker
-#             melt_pinn = pinn.predict(T_boundary, time_pinn)
-#             print(f"PINN prediction for T_boundary = {T_boundary}°C complete.") # Marker
-
-#             # Plot comparison
-#             plt.plot(time_fem, melt_fem, 'ro-', label='FEM', alpha=0.7)
-#             plt.plot(time_pinn, melt_pinn, 'b-', label='PINN', linewidth=2)
-
-#             plt.xlabel('Time (s)')
-#             plt.ylabel('Melt Fraction')
-#             plt.title(f'T = {T_boundary}°C')
-#             plt.legend()
-#             plt.grid(True, alpha=0.3)
-
-#         plt.tight_layout()
-#         plt.savefig('fem_vs_pinn_comparison_simple.png', dpi=300, bbox_inches='tight') # Changed filename
-#         plt.show()
-#         print("FEM and PINN comparison plot complete.") # Marker
-
-#     except Exception as e:
-#         print(f"Could not load trained model: {e}")
-#         print("Please train the model first using train_pinn_model()")
-
-
-# if __name__ == "__main__":
-#     # Check if training data exists
-#     if os.path.exists('pcm_training_data/combined_training_data.csv'):
-#         print("Training data found. Training PINN model...")
-#         trained_pinn = train_pinn_model()
-
-#         # Compare with FEM
-#         print("\nComparing FEM and PINN predictions...")
-#         compare_fem_and_pinn()
-#     else:
-#         print("Training data not found. Please run the FEM simulation first to generate training data.")
-#         print("Run: python pcm_fem_simulation.py")
