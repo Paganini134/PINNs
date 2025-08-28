@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Welcome, {{ user.username }}!</h2>
+        <p class="text-muted">Last login: {{ user.last_login or 'First time login' }}</p>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-thermometer-half"></i> Run Simulation</h5>
+                        <p class="card-text">Execute PCM thermal simulations with custom parameters.</p>
+                        <a href="{{ url_for('simulation') }}" class="btn btn-primary">Start Simulation</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-shield-check"></i> Security Settings</h5>
+                        <p class="card-text">Manage your account security and MFA settings.</p>
+                        {% if user.is_mfa_enabled %}
+                        <a href="{{ url_for('mfa_manage') }}" class="btn btn-success">Manage MFA</a>
+                        {% else %}
+                        <a href="{{ url_for('mfa_setup') }}" class="btn btn-warning">Setup MFA</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-key"></i> Change Password</h5>
+                        <p class="card-text">Update your account password for security.</p>
+                        <a href="{{ url_for('change_password') }}" class="btn btn-outline-primary">Change Password</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-box-arrow-right"></i> Logout</h5>
+                        <p class="card-text">Securely end your session.</p>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-person-circle"></i> Account Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-5">Username:</dt>
+                    <dd class="col-7">{{ user.username }}</dd>
+                    
+                    <dt class="col-5">Email:</dt>
+                    <dd class="col-7">{{ user.email }}</dd>
+                    
+                    {% if user.phone %}
+                    <dt class="col-5">Phone:</dt>
+                    <dd class="col-7">{{ user.phone }}</dd>
+                    {% endif %}
+                    
+                    <dt class="col-5">MFA Status:</dt>
+                    <dd class="col-7">
+                        {% if user.is_mfa_enabled %}
+                        <span class="badge bg-success">Enabled</span>
+                        {% else %}
+                        <span class="badge bg-warning">Disabled</span>
+                        {% endif %}
+                    </dd>
+                    
+                    {% if user.is_mfa_enabled %}
+                    <dt class="col-5">Backup Codes:</dt>
+                    <dd class="col-7">{{ user.backup_codes_remaining }} remaining</dd>
+                    {% endif %}
+                    
+                    <dt class="col-5">Member Since:</dt>
+                    <dd class="col-7">{{ user.created_at[:10] }}</dd>
+                </dl>
+            </div>
+        </div>
+        
+        {% if not user.is_mfa_enabled %}
+        <div class="alert alert-warning mt-3" role="alert">
+            <h6><i class="bi bi-exclamation-triangle"></i> Security Recommendation</h6>
+            Enable multi-factor authentication to secure your account.
+            <a href="{{ url_for('mfa_setup') }}" class="btn btn-sm btn-warning mt-2">Setup MFA</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

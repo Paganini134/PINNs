@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Manage MFA - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-shield-check"></i> Manage Multi-Factor Authentication</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success" role="alert">
+                    <h6><i class="bi bi-check-circle"></i> MFA is Enabled</h6>
+                    Your account is protected with multi-factor authentication.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bi bi-key"></i> Backup Codes</h6>
+                                <p class="card-text">Generate new backup codes for account recovery.</p>
+                                <p class="text-muted">Remaining: {{ user.backup_codes_remaining }} codes</p>
+                                <form method="POST" action="{{ url_for('generate_backup_codes') }}">
+                                    <button type="submit" class="btn btn-primary">Generate New Codes</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bi bi-shield-x"></i> Disable MFA</h6>
+                                <p class="card-text">Remove MFA protection from your account.</p>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#disableMfaModal">
+                                    Disable MFA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning" role="alert">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Important Security Information</h6>
+                    <ul class="mb-0">
+                        <li>Keep your backup codes in a safe place</li>
+                        <li>Each backup code can only be used once</li>
+                        <li>Generate new backup codes if you're running low</li>
+                        <li>Never share your authenticator secret or backup codes</li>
+                    </ul>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Disable MFA Modal -->
+<div class="modal fade" id="disableMfaModal" tabindex="-1" aria-labelledby="disableMfaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="disableMfaModalLabel">Disable Multi-Factor Authentication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('disable_mfa') }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Warning:</strong> Disabling MFA will make your account less secure.
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Confirm your password:</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Disable MFA</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

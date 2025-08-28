@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Register - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-person-plus"></i> Create Account</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required
+                               pattern="[a-zA-Z0-9_]{3,20}" title="3-20 characters, letters, numbers, and underscore only">
+                        <div class="form-text">3-20 characters, letters, numbers, and underscore only</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number (Optional)</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               placeholder="+1234567890">
+                        <div class="form-text">For SMS verification (optional)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <div class="form-text">
+                            Must contain at least 8 characters with uppercase, lowercase, number, and special character
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-person-plus"></i> Register
+                    </button>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('login') }}">Already have an account? Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (password !== confirmPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+</script>
+{% endblock %}
