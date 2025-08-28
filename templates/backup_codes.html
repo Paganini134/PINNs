@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Backup Codes - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-key"></i> Backup Codes Generated</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Important!</h6>
+                    <ul class="mb-0">
+                        <li>Save these codes in a secure location</li>
+                        <li>Each code can only be used once</li>
+                        <li>Use them if you lose access to your authenticator</li>
+                        <li>These codes will not be shown again</li>
+                    </ul>
+                </div>
+                
+                <div class="backup-codes">
+                    <h6>Your Backup Codes:</h6>
+                    <div class="row">
+                        {% for code in backup_codes %}
+                        <div class="col-md-6">
+                            <div class="backup-code text-center p-2 m-1 border rounded">
+                                <code>{{ code }}</code>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary me-2" onclick="printCodes()">
+                        <i class="bi bi-printer"></i> Print Codes
+                    </button>
+                    <button class="btn btn-outline-primary me-2" onclick="downloadCodes()">
+                        <i class="bi bi-download"></i> Download as Text
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('mfa_manage') }}" class="btn btn-success">
+                        <i class="bi bi-check2"></i> I've Saved My Codes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function printCodes() {
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write('<html><head><title>PCM Simulation - Backup Codes</title></head><body>');
+    printWindow.document.write('<h2>PCM Simulation - Backup Codes</h2>');
+    printWindow.document.write('<p>Generated: ' + new Date().toLocaleString() + '</p>');
+    printWindow.document.write('<p>Keep these codes secure. Each can only be used once.</p>');
+    printWindow.document.write('<ul>');
+    {% for code in backup_codes %}
+    printWindow.document.write('<li style="font-family: monospace; font-size: 14px;">{{ code }}</li>');
+    {% endfor %}
+    printWindow.document.write('</ul>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function downloadCodes() {
+    const codes = [
+        {% for code in backup_codes %}
+        '{{ code }}',
+        {% endfor %}
+    ];
+    
+    const content = 'PCM Simulation - Backup Codes\n' +
+                   'Generated: ' + new Date().toLocaleString() + '\n' +
+                   'Keep these codes secure. Each can only be used once.\n\n' +
+                   codes.join('\n');
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pcm-simulation-backup-codes.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

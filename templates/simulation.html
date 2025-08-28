@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}PCM Simulation - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-thermometer-half"></i> PCM Simulation Parameters</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="simulationForm">
+                    <div class="mb-3">
+                        <label for="boundary_temp" class="form-label">Boundary Temperature (°C)</label>
+                        <input type="number" class="form-control" id="boundary_temp" name="boundary_temp" 
+                               value="30" min="10" max="100" step="0.1" required>
+                        <div class="form-text">Temperature at the boundaries of the simulation domain</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="max_time" class="form-label">Maximum Time (seconds)</label>
+                        <input type="number" class="form-control" id="max_time" name="max_time" 
+                               value="1000" min="100" max="10000" step="100" required>
+                        <div class="form-text">Maximum simulation time</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="save_interval" class="form-label">Save Interval (seconds)</label>
+                        <input type="number" class="form-control" id="save_interval" name="save_interval" 
+                               value="10" min="1" max="100" step="1" required>
+                        <div class="form-text">Interval for saving simulation data</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-play-circle"></i> Run Simulation
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Simulation Information</h5>
+            </div>
+            <div class="card-body">
+                <h6>Phase Change Material Properties:</h6>
+                <ul>
+                    <li>Solidus Temperature: 4.0°C</li>
+                    <li>Liquidus Temperature: 5.0°C</li>
+                    <li>Initial Temperature: 2.0°C</li>
+                    <li>Domain Length: 0.1 m</li>
+                    <li>Number of Nodes: 101</li>
+                </ul>
+                
+                <div class="alert alert-info" role="alert">
+                    <small>The simulation solves the 1D heat equation with phase change using an implicit finite difference scheme.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        {% if results %}
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-graph-up"></i> Simulation Results</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="simulationChart" width="400" height="300"></canvas>
+                
+                <div class="mt-3">
+                    <h6>Results Summary:</h6>
+                    <ul>
+                        <li>Boundary Temperature: {{ results.boundary_temp }}°C</li>
+                        <li>Final Time: {{ "%.1f"|format(results.time[-1]) }} seconds</li>
+                        <li>Final Melt Fraction: {{ "%.3f"|format(results.melt_fraction[-1]) }}</li>
+                        <li>Data Points: {{ results.time|length }}</li>
+                    </ul>
+                </div>
+                
+                <button class="btn btn-outline-primary" onclick="downloadResults()">
+                    <i class="bi bi-download"></i> Download Data
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-thermometer-half" style="font-size: 4rem; color: #6c757d;"></i>
+                <h5 class="mt-3">No Results Yet</h5>
+                <p class="text-muted">Run a simulation to see results here.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if results %}
+<script>
+const ctx = document.getElementById('simulationChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ results.time | tojson }},
+        datasets: [{
+            label: 'Melt Fraction',
+            data: {{ results.melt_fraction | tojson }},
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Melt Fraction vs Time'
+            }
+        },
+        scales: {
+            x: {
+                display: true,
+                title: {
+                    display: true,
+                    text: 'Time (seconds)'
+                }
+            },
+            y: {
+                display: true,
+                title: {
+                    display: true,
+                    text: 'Melt Fraction'
+                },
+                min: 0,
+                max: 1
+            }
+        }
+    }
+});
+
+function downloadResults() {
+    const results = {{ results | tojson }};
+    const csvContent = "Time,Melt_Fraction\n" + 
+                      results.time.map((time, index) => 
+                          time + "," + results.melt_fraction[index]
+                      ).join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pcm_simulation_T${results.boundary_temp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}MFA Verification - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-shield-check"></i> Multi-Factor Authentication</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Please enter your authentication code to complete login.</p>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="mfa_token" class="form-label">Authentication Code</label>
+                        <input type="text" class="form-control" id="mfa_token" name="mfa_token" 
+                               placeholder="6-digit code from authenticator app" maxlength="6" pattern="[0-9]{6}">
+                        <div class="form-text">Enter the 6-digit code from your authenticator app</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-shield-check"></i> Verify Code
+                    </button>
+                </form>
+                
+                <hr>
+                
+                <h6>Alternative: Use Backup Code</h6>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="backup_code" class="form-label">Backup Code</label>
+                        <input type="text" class="form-control" id="backup_code" name="backup_code" 
+                               placeholder="8-character backup code">
+                        <div class="form-text">Use only if you cannot access your authenticator</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-key"></i> Use Backup Code
+                    </button>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('logout') }}">Cancel and logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-submit when 6 digits are entered
+document.getElementById('mfa_token').addEventListener('input', function() {
+    if (this.value.length === 6 && /^[0-9]{6}$/.test(this.value)) {
+        this.form.submit();
+    }
+});
+</script>
+{% endblock %}

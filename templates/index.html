@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Home - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 rounded">
+    <h1 class="display-4">Welcome to PCM Simulation</h1>
+    <p class="lead">A secure Physics-Informed Neural Networks platform for Phase Change Material thermal simulations with multi-factor authentication.</p>
+    <hr class="my-4">
+    <p>This application provides secure access to advanced thermal simulation tools with enterprise-grade authentication.</p>
+    
+    {% if not session.session_id %}
+    <div class="mt-4">
+        <a class="btn btn-primary btn-lg me-3" href="{{ url_for('register') }}">
+            <i class="bi bi-person-plus"></i> Register
+        </a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('login') }}">
+            <i class="bi bi-box-arrow-in-right"></i> Login
+        </a>
+    </div>
+    {% else %}
+    <div class="mt-4">
+        <a class="btn btn-primary btn-lg me-3" href="{{ url_for('dashboard') }}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('simulation') }}">
+            <i class="bi bi-thermometer-half"></i> Run Simulation
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-shield-check"></i> Secure Authentication</h5>
+                <p class="card-text">Multi-factor authentication with TOTP, SMS, and email verification options for enhanced security.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-graph-up"></i> Advanced Simulations</h5>
+                <p class="card-text">Physics-Informed Neural Networks for accurate phase change material thermal modeling.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-cloud-arrow-down"></i> Data Export</h5>
+                <p class="card-text">Export simulation results and training data for further analysis and research.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

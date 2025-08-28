@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}MFA Setup - PCM Simulation{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-shield-plus"></i> Setup Multi-Factor Authentication</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <h6><i class="bi bi-info-circle"></i> What is MFA?</h6>
+                    Multi-factor authentication adds an extra layer of security by requiring a second form of verification beyond your password.
+                </div>
+                
+                <h5>Step 1: Install an Authenticator App</h5>
+                <p>Download one of these apps on your mobile device:</p>
+                <ul>
+                    <li><strong>Google Authenticator</strong> (iOS/Android)</li>
+                    <li><strong>Microsoft Authenticator</strong> (iOS/Android)</li>
+                    <li><strong>Authy</strong> (iOS/Android/Desktop)</li>
+                </ul>
+                
+                <h5 class="mt-4">Step 2: Scan the QR Code</h5>
+                <p>Open your authenticator app and scan this QR code:</p>
+                
+                {% if qr_code %}
+                <div class="text-center">
+                    <img src="data:image/png;base64,{{ qr_code }}" class="mfa-qr" alt="QR Code for MFA Setup">
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-secondary mt-3" role="alert">
+                    <h6>Manual Entry</h6>
+                    <p>If you can't scan the QR code, enter this secret manually:</p>
+                    <code>{{ message.split('Secret: ')[1] if 'Secret:' in message else '' }}</code>
+                </div>
+                
+                <h5 class="mt-4">Step 3: Verify Setup</h5>
+                <p>Enter the 6-digit code from your authenticator app to complete setup:</p>
+                
+                <form method="POST" action="{{ url_for('mfa_verify') }}">
+                    <div class="mb-3">
+                        <label for="mfa_token" class="form-label">Verification Code</label>
+                        <input type="text" class="form-control" id="mfa_token" name="mfa_token" 
+                               placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-shield-check"></i> Complete MFA Setup
+                    </button>
+                </form>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-submit when 6 digits are entered
+document.getElementById('mfa_token').addEventListener('input', function() {
+    if (this.value.length === 6 && /^[0-9]{6}$/.test(this.value)) {
+        this.form.submit();
+    }
+});
+</script>
+{% endblock %}
